@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="ltr" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HadisAra - Arama Sistemi</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Naskh+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#2a3640",
+                        "on-tertiary": "#25323e",
+                        "on-primary": "#402d00",
+                        "background": "#08151e",
+                        "primary-fixed-dim": "#e3c285",
+                        "on-surface": "#d7e4f1",
+                        "on-secondary-container": "#afb9c7",
+                        "secondary": "#bdc7d5",
+                        "tertiary-container": "#a1afbe",
+                        "surface": "#08151e",
+                        "on-primary-fixed": "#261900",
+                        "on-secondary-fixed": "#121c27",
+                        "on-tertiary-container": "#35424f",
+                        "surface-container-high": "#1f2b35",
+                        "on-tertiary-fixed": "#0f1d28",
+                        "on-secondary-fixed-variant": "#3e4853",
+                        "primary": "#e5c487",
+                        "inverse-primary": "#735b28",
+                        "surface-tint": "#e3c285",
+                        "surface-container-low": "#101d26",
+                        "tertiary-fixed-dim": "#bac8d8",
+                        "tertiary": "#bdcada",
+                        "outline": "#998f81",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed": "#d6e4f4",
+                        "surface-dim": "#08151e",
+                        "on-primary-fixed-variant": "#594312",
+                        "inverse-surface": "#d7e4f1",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#404a55",
+                        "secondary-fixed-dim": "#bdc7d5",
+                        "on-surface-variant": "#d0c5b5",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#040f18",
+                        "primary-container": "#c8a96e",
+                        "on-error": "#690005",
+                        "on-secondary": "#27313c",
+                        "outline-variant": "#4d463a",
+                        "on-primary-container": "#533d0c",
+                        "surface-container": "#14212a",
+                        "surface-bright": "#2e3b45",
+                        "surface-variant": "#2a3640",
+                        "inverse-on-surface": "#25323c",
+                        "primary-fixed": "#ffdea3",
+                        "on-tertiary-fixed-variant": "#3b4855",
+                        "on-background": "#d7e4f1",
+                        "secondary-fixed": "#d9e3f2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "component-gap": "12px",
+                        "section-margin": "48px",
+                        "base": "8px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "arabic-body": ["Noto Naskh Arabic"],
+                        "body-main": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "arabic-display": ["Noto Naskh Arabic"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "arabic-body": ["20px", { "lineHeight": "2.0", "fontWeight": "400" }],
+                        "body-main": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "arabic-display": ["28px", { "lineHeight": "1.8", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(26, 39, 51, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(200, 169, 110, 0.2);
+        }
+        .glass-panel:hover {
+            border-color: rgba(200, 169, 110, 0.4);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-[#0F1923] text-on-background font-body-main antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#0F1923]/80 backdrop-blur-xl border-b border-[#C8A96E]/20 shadow-2xl shadow-black/50">
+<div class="flex justify-between items-center h-20 px-6 lg:px-12 max-w-[1140px] mx-auto">
+<div class="text-2xl font-bold text-[#C8A96E] tracking-tight font-['Inter'] antialiased">
+                حديث | HadisAra
+            </div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center gap-8">
+<a class="text-[#C8A96E] border-b-2 border-[#C8A96E] pb-1 font-body-main text-body-main" href="#">Ana Sayfa</a>
+<a class="text-gray-400 hover:text-[#C8A96E] transition-colors font-body-main text-body-main hover:bg-[#C8A96E]/10 duration-300 rounded px-2 py-1" href="#">Favoriler</a>
+</div>
+<!-- Actions -->
+<div class="hidden md:flex items-center gap-4">
+<button class="text-gray-400 hover:text-[#C8A96E] transition-colors hover:bg-[#C8A96E]/10 duration-300 p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">language</span>
+</button>
+<button class="text-[#C8A96E] border border-[#C8A96E] px-4 py-2 rounded-full hover:bg-[#C8A96E]/10 transition-colors font-label-sm text-label-sm uppercase tracking-wider">Login</button>
+<button class="bg-[#C8A96E] text-[#0F1923] px-4 py-2 rounded-full hover:bg-[#e3c285] transition-colors font-label-sm text-label-sm uppercase tracking-wider font-bold">Signup</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-24 px-6 md:px-12 max-w-[1140px] mx-auto w-full flex flex-col gap-12 pb-24">
+<!-- HERO SECTION -->
+<section class="flex flex-col items-center justify-center min-h-[409px] text-center pt-12">
+<h1 class="font-headline-lg text-headline-lg text-[#C8A96E] mb-4">Hadis Arama Sistemi</h1>
+<p class="font-body-main text-body-main text-on-surface-variant mb-8 max-w-2xl">Sahih Bukhari külliyatında semantik arama</p>
+<div class="w-full max-w-3xl relative mb-6 group">
+<input class="w-full h-16 bg-surface-container-high border border-outline-variant rounded-full pl-6 pr-16 text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 font-body-main text-body-main" dir="auto" placeholder="Niyet hakkında hadis ara... أو ابحث بالعربية" type="text"/>
+<button class="absolute right-2 top-2 h-12 w-12 bg-primary rounded-full flex items-center justify-center text-[#0F1923] hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+<div class="flex items-center gap-2 mb-6">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider bg-surface-container-high px-3 py-1 rounded-full border border-outline-variant">Dil: Otomatik</span>
+</div>
+<div class="flex flex-wrap justify-center gap-3">
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:bg-primary/10 hover:border-primary hover:text-primary transition-all duration-300">Niyet</button>
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:bg-primary/10 hover:border-primary hover:text-primary transition-all duration-300">Prayer / Namaz</button>
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:bg-primary/10 hover:border-primary hover:text-primary transition-all duration-300" dir="rtl">الصبر</button>
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:bg-primary/10 hover:border-primary hover:text-primary transition-all duration-300">Fasting</button>
+</div>
+</section>
+<!-- RESULTS SECTION (Bento Grid Style) -->
+<section class="grid grid-cols-1 gap-6">
+<!-- Result Card 1 -->
+<article class="glass-panel rounded-xl p-6 transition-all duration-300 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-1 bg-gradient-to-l from-primary to-transparent opacity-50"></div>
+<header class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-2">
+<div class="w-10 h-2 bg-primary/20 rounded-full overflow-hidden">
+<div class="w-full h-full bg-primary"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Relevance: High</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Bukhari #1</span>
+</div>
+</header>
+<div class="flex flex-col gap-6">
+<!-- Arabic -->
+<div class="text-right" dir="rtl">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Narrated 'Umar bin Al-Khattab:</p>
+<p class="font-arabic-display text-arabic-display text-on-surface leading-relaxed">
+                            إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى
+                        </p>
+</div>
+<div class="w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+<!-- English -->
+<div class="text-left" dir="ltr">
+<p class="font-body-main text-body-main text-on-surface-variant leading-relaxed">
+                            The reward of deeds depends upon the intentions and every person will get the reward according to what he has intended.
+                        </p>
+</div>
+</div>
+<footer class="mt-6 pt-4 border-t border-outline-variant/30 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-size: 20px;">share</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-size: 20px;">favorite</span>
+</button>
+</footer>
+</article>
+<!-- Result Card 2 -->
+<article class="glass-panel rounded-xl p-6 transition-all duration-300 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-1 bg-gradient-to-l from-primary to-transparent opacity-30"></div>
+<header class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-2">
+<div class="w-10 h-2 bg-primary/20 rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-primary"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Relevance: Medium</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Bukhari #54</span>
+</div>
+</header>
+<div class="flex flex-col gap-6">
+<!-- Arabic -->
+<div class="text-right" dir="rtl">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Narrated Abu Mas'ud:</p>
+<p class="font-arabic-display text-arabic-display text-on-surface leading-relaxed">
+                            إِذَا أَنْفَقَ الرَّجُلُ عَلَى أَهْلِهِ يَحْتَسِبُهَا فَهُوَ لَهُ صَدَقَةٌ
+                        </p>
+</div>
+<div class="w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+<!-- English -->
+<div class="text-left" dir="ltr">
+<p class="font-body-main text-body-main text-on-surface-variant leading-relaxed">
+                            When a Muslim spends something on his family intending to receive Allah's reward it is regarded as Sadaqa for him.
+                        </p>
+</div>
+</div>
+<footer class="mt-6 pt-4 border-t border-outline-variant/30 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-size: 20px;">share</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-size: 20px;">favorite</span>
+</button>
+</footer>
+</article>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0F1923] border-t border-[#C8A96E]/10 mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center py-12 px-6 max-w-[1140px] mx-auto gap-6 text-sm font-['Inter']">
+<div class="text-lg font-bold text-[#C8A96E]">حديث | HadisAra</div>
+<div class="flex flex-wrap gap-6 justify-center">
+<a class="text-gray-500 hover:text-[#C8A96E] transition-colors cursor-pointer" href="#">Privacy Policy</a>
+<a class="text-gray-500 hover:text-[#C8A96E] transition-colors cursor-pointer" href="#">Terms of Service</a>
+<a class="text-gray-500 hover:text-[#C8A96E] transition-colors cursor-pointer" href="#">API Documentation</a>
+<a class="text-gray-500 hover:text-[#C8A96E] transition-colors cursor-pointer" href="#">Contact</a>
+</div>
+<div class="text-gray-500">
+                © 2024 HadisAra. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>
