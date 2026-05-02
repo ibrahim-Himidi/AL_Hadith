@@ -28,7 +28,7 @@ def get_qdrant_client() -> QdrantClient:
 
 # ── Encoding ─────────────────────────────────────────────────────────────────
 
-def encode_query(text: str) -> list[float]:
+def _encode_query_sync(text: str) -> list[float]:
     """Sorgu metnini vektöre dönüştür."""
     model = get_embedding_model()
     vector = model.encode(
@@ -41,6 +41,17 @@ def encode_query(text: str) -> list[float]:
 
 # ── Arama ────────────────────────────────────────────────────────────────────
 
+def _qdrant_search_sync(collection: str, query_vector: list[float], top_k: int):
+    client = get_qdrant_client()
+    res = client.query_points(
+        collection_name=collection,
+        query=query_vector,
+        limit=top_k,
+        with_payload=True,
+        score_threshold=0.0,
+    )
+    return res.points
+
 async def vector_search(
     query: str,
     lang: str = "en",
@@ -51,21 +62,18 @@ async def vector_search(
     Döner: [{"hadis_id": int, "score": float}, ...]
     top_k: RRF fusion için geniş tutuluyor (varsayılan 50)
     """
+    import asyncio
+    
     collection = (
         settings.qdrant_collection_ar if lang == "ar"
         else settings.qdrant_collection_en
     )
+    
+    # Embedding işlemini ayrı thread'de yap
+    query_vector = await asyncio.to_thread(_encode_query_sync, query)
 
-    client = get_qdrant_client()
-    query_vector = encode_query(query)
-
-    results = client.search(
-        collection_name=collection,
-        query_vector=query_vector,
-        limit=top_k,
-        with_payload=True,
-        score_threshold=0.0,
-    )
+    # Qdrant aramasını ayrı thread'de yap
+    results = await asyncio.to_thread(_qdrant_search_sync, collection, query_vector, top_k)
 
     return [
         {
