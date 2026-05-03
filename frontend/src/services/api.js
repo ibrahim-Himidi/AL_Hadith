@@ -11,14 +11,15 @@ const apiClient = axios.create({
 });
 
 // Arama Endpoint'i
-export const searchHadiths = async (query, language = 'auto', page = 1, limit = 10) => {
+export const searchHadiths = async (query, language = 'auto', page = 1, limit = 10, mode = 'hybrid') => {
   try {
     const response = await apiClient.get('/ara', {
       params: {
         q: query,
         dil: language,
         sayfa: page,
-        limit: limit
+        limit: limit,
+        mod: mode
       }
     });
     return response.data;

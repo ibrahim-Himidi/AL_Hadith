@@ -26,17 +26,18 @@ async def ara(
     dil: str = Query("auto", description="'ar', 'en' veya 'auto'"),
     sayfa: int = Query(1, ge=1, description="Sayfa numarası"),
     limit: int = Query(10, ge=1, le=50, description="Sayfa başına sonuç"),
+    mod: str = Query("hybrid", description="Arama modu: 'hybrid', 'bm25', 'vector'"),
 ):
     gercek_dil = dil if dil in ("ar", "en") else detect_language(q)
 
-    sonuclar, toplam, mod = await hybrid_search(
-        db, q, dil=dil, sayfa=sayfa, limit=limit
+    sonuclar, toplam, donen_mod = await hybrid_search(
+        db, q, dil=dil, sayfa=sayfa, limit=limit, search_mode=mod
     )
 
     return SearchResponse(
         sorgu=q,
         dil=gercek_dil,
-        mod=mod,
+        mod=donen_mod,
         sayfa=sayfa,
         toplam=toplam,
         sonuclar=sonuclar,  # type: ignore[arg-type]

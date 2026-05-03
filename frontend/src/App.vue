@@ -70,6 +70,11 @@
 
                 <form class="mt-8" dir="ltr" @submit.prevent="submitSearch">
                   <div class="search-shell">
+                    <select v-model="userSelectedMode" class="h-14 bg-transparent px-3 text-sm text-[#1F2F2A] outline-none border-r border-[#D8D0BE]">
+                      <option value="hybrid">{{ t.searchModes.hybrid }}</option>
+                      <option value="vector">{{ t.searchModes.vector }}</option>
+                      <option value="bm25">{{ t.searchModes.bm25 }}</option>
+                    </select>
                     <input
                       v-model="searchQuery"
                       type="search"
@@ -133,7 +138,7 @@
             </section>
 
             <section class="grid grid-cols-2 gap-3">
-              <div v-for="stat in stats" :key="stat.label" class="rounded-lg border border-[#DCD4C1] bg-[#FCFAF5]/82 p-4 shadow-sm">
+              <div v-for="stat in stats" :key="stat.label" class="flex flex-col items-center justify-center rounded-lg border border-[#DCD4C1] bg-[#FCFAF5]/82 p-4 text-center shadow-sm">
                 <p class="text-2xl font-semibold text-[#1E332B]">{{ stat.value }}</p>
                 <p class="mt-1 text-sm text-[#6C7B72]">{{ stat.label }}</p>
               </div>
@@ -164,6 +169,11 @@
 
               <form class="mt-6" @submit.prevent="submitSearch">
                 <div class="grid gap-3">
+                  <select v-model="userSelectedMode" class="h-14 w-full min-w-0 rounded-lg border border-[#D8D0BE] bg-white px-4 text-[#1F2F2A] outline-none focus:border-[#315B45]">
+                    <option value="hybrid">{{ t.searchModes.hybrid }}</option>
+                    <option value="vector">{{ t.searchModes.vector }}</option>
+                    <option value="bm25">{{ t.searchModes.bm25 }}</option>
+                  </select>
                   <input
                     v-model="searchQuery"
                     type="search"
@@ -283,6 +293,9 @@
           <button type="button" class="transition hover:text-[#315B45]" @click="setUiLanguage(isArabicUi ? 'en' : 'ar')">{{ t.language }}</button>
         </div>
       </div>
+      <div class="mx-auto max-w-7xl border-t border-[#D9D1BF]/40 px-4 py-4 text-center text-base text-[#6C7B72] md:px-6">
+        Developed with ❤️ by Ibrahim Himidi & Beşşar Elcasim
+      </div>
     </footer>
   </div>
 </template>
@@ -298,6 +311,7 @@ const searchQuery = ref('');
 const results = ref([]);
 const totalResults = ref(0);
 const searchMode = ref('');
+const userSelectedMode = ref('hybrid');
 const isLoading = ref(false);
 const error = ref(null);
 const hasSearched = ref(false);
@@ -311,7 +325,7 @@ const translations = {
     nav: { home: 'Home', search: 'Search Hadith', books: 'Books', ai: 'HadithAI (Coming Soon)' },
     language: 'Language',
     heroEyebrow: 'Hadith research workspace',
-    heroTitle: 'A quieter way to search authentic hadith.',
+    heroTitle: 'Quick access to hadith texts at your fingertips',
     heroSubtitle: 'Search Sahih Bukhari in Arabic or English through a focused reading interface built for long texts, careful comparison, and calm study.',
     searchPlaceholder: 'Search in English or Arabic...',
     search: 'Search',
@@ -341,13 +355,18 @@ const translations = {
     aiSubtitle: 'AI-powered Hadith insights will be available soon.',
     about: 'About',
     contact: 'Contact',
+    searchModes: {
+      hybrid: 'Smart Search (Meaning + Words)',
+      vector: 'Meaning Search (Semantic)',
+      bm25: 'Exact Match (Words)',
+    },
   },
   ar: {
     brandSub: 'العربية والإنجليزية',
     nav: { home: 'الرئيسية', search: 'بحث الحديث', books: 'الكتب', ai: 'HadithAI' },
     language: 'اللغة',
     heroEyebrow: 'مساحة بحث حديثية',
-    heroTitle: 'طريقة أكثر هدوءا للبحث في الحديث الصحيح.',
+    heroTitle: 'وصول سريع إلى نصوص الحديث بين يديك',
     heroSubtitle: 'ابحث في صحيح البخاري بالعربية أو الإنجليزية ضمن واجهة قراءة مركزة للنصوص الطويلة والمقارنة الهادئة.',
     searchPlaceholder: 'ابحث بالعربية أو الإنجليزية...',
     search: 'بحث',
@@ -377,6 +396,11 @@ const translations = {
     aiSubtitle: 'ستتوفر قريبا رؤى مدعومة بالذكاء الاصطناعي حول الأحاديث.',
     about: 'حول',
     contact: 'تواصل',
+    searchModes: {
+      hybrid: 'بحث ذكي (المعنى + الكلمات)',
+      vector: 'بحث بالمعنى (دلالي)',
+      bm25: 'تطابق دقيق (كلمات)',
+    },
   },
 };
 
@@ -406,8 +430,6 @@ const dailyHadith = {
 const stats = computed(() => [
   { value: '7,277', label: isArabicUi.value ? 'حديث' : 'Hadiths' },
   { value: '2', label: isArabicUi.value ? 'لغتان' : 'Languages' },
-  { value: 'AR', label: isArabicUi.value ? 'اتجاه RTL' : 'RTL ready' },
-  { value: 'EN', label: isArabicUi.value ? 'اتجاه LTR' : 'LTR ready' },
 ]);
 
 const calmPanels = computed(() => [
@@ -505,7 +527,7 @@ const submitSearch = async () => {
   clearFilters();
 
   try {
-    const data = await searchHadiths(query, detectedSearchLanguage.value);
+    const data = await searchHadiths(query, detectedSearchLanguage.value, 1, 10, userSelectedMode.value);
     results.value = data.sonuclar || [];
     totalResults.value = data.toplam || 0;
     searchMode.value = data.mod || 'bm25_only';

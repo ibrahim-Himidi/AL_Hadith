@@ -118,6 +118,7 @@ async def hybrid_search(
     dil: str = "auto",
     sayfa: int = 1,
     limit: int = 10,
+    search_mode: str = "hybrid",
 ) -> tuple[list[dict], int, str]:
     """
     Hibrit arama: BM25 + Semantik → RRF Fusion.
@@ -135,10 +136,30 @@ async def hybrid_search(
     # Qdrant hazır mı kontrol et
     qdrant_ok = await is_qdrant_ready(dil)
 
-    if not qdrant_ok:
-        # Faz 1 fallback: sadece BM25
+    if not qdrant_ok or search_mode == "bm25":
+        # Sadece BM25
         sonuclar, toplam = await bm25_search(db, query, dil=dil, sayfa=sayfa, limit=limit)
         return sonuclar, toplam, "bm25_only"
+
+    if search_mode == "vector":
+        # Sadece Vektör Arama
+        vector_raw = await vector_search(query, lang=dil, top_k=limit * sayfa)
+        toplam = len(vector_raw)
+        offset = (sayfa - 1) * limit
+        page_ids = [item["hadis_id"] for item in vector_raw[offset : offset + limit]]
+        score_map = {item["hadis_id"]: item["score"] for item in vector_raw}
+
+        if not page_ids:
+            return [], toplam, "vector_only"
+            
+        details = await fetch_hadis_details(db, page_ids)
+        sonuclar = []
+        for hid in page_ids:
+            if hid in details:
+                item = details[hid].copy()
+                item["skor"] = round(score_map[hid], 6)
+                sonuclar.append(item)
+        return sonuclar, toplam, "vector_only"
 
     # ── Paralel: BM25 + Semantik arama aynı anda ──────────────────────────
     TOP_K = 100  # her kaynaktan en fazla 100 sonuç al, sonra RRF ile birleştir

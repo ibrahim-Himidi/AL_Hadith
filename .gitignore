@@ -1,5 +1,7 @@
 # Ortam değişkenleri — asla commit etme!
 .env
+.env.local
+*.env
 
 # Python
 __pycache__/
