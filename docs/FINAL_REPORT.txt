@@ -1,0 +1,327 @@
+================================================================================
+                        HADITHSEARCH - FINAL PROJE RAPORU
+================================================================================
+
+Proje: HadithSearch - Hadis Semantik Arama Platformu
+Tarih: Mayıs 2026
+Geliştiriciler: Ostim Teknik Üniversitesi Öğrencileri
+                 230205913@ostimteknik.edu.tr
+                 230205928@ostimteknik.edu.tr
+
+================================================================================
+1. PROJE ÖZETİ
+================================================================================
+
+HadithSearch, Sahih Bukhari külliyatındaki 7.277 hadisi Arapça ve İngilizce
+olarak arayabileceğiniz modern bir web platformudur. Geleneksel kelime 
+eşleşmesi (BM25) ile derin öğrenme tabanlı anlamsal aramayı (Semantic Search)
+birleştiren hibrit bir mimari kullanır.
+
+PROJE AMACI:
+- İslami hadis literatürüne hızlı ve akıllı erişim sağlamak
+- Arapça ve İngilizce arama desteği sunmak
+- Modern NLP teknikleriyle anlamsal benzerlik araması yapmak
+- Açık kaynak ve ölçeklenebilir bir arama altyapısı oluşturmak
+
+================================================================================
+2. KULLANILAN TEKNOLOJİLER
+================================================================================
+
+BACKEND:
+- FastAPI 0.115+     : Modern, async Python web framework
+- SQLAlchemy 2.0+    : Async ORM ve veritabanı yönetimi
+- asyncmy            : Async MySQL driver
+- python-jose        : JWT token yönetimi
+- passlib[bcrypt]    : Şifre hashleme
+
+VERİTABANI:
+- MySQL 8.0          : Metadata ve FULLTEXT index
+- Qdrant 1.12+       : Vektör veritabanı (sembantik arama)
+
+NLP / MAKİNE ÖĞRENMESİ:
+- sentence-transformers 3.3+ : Embedding modeli
+- paraphrase-multilingual-mpnet-base-v2 : Çok dilli embedding modeli
+- torch 2.5+         : PyTorch backend
+
+FRONTEND:
+- Vue.js 3           : Progressive JavaScript framework
+- Vite 8.x           : Build tool ve dev server
+- Tailwind CSS 4.x   : Utility-first CSS framework
+
+ALTYAPI:
+- Docker             : Containerization
+- Docker Compose     : Multi-container orchestration
+
+TEKNOLOJİ SEÇİM NEDENLERİ:
+1. FastAPI: Otomatik API dokümantasyonu, async desteği, Pydantic validasyonu
+2. Qdrant: HNSW algoritması ile hızlı vektör arama, REST API
+3. sentence-transformers: Ücretsiz, çok dilli, yüksek kaliteli embeddingler
+4. Vue 3: Composition API, reaktivite, küçük bundle boyutu
+5. Tailwind: Hızlı UI geliştirme, tutarlı tasarım sistemi
+
+================================================================================
+3. SİSTEM MİMARİSİ
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            CLIENT TARAFI                                    │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                 │
+│  │   Vue.js 3   │───▶│   HTTP/REST  │───▶│   Browser    │                 │
+│  │   Frontend   │◀───│   Axios/Fetch│◀───│   (User)     │                 │
+│  └──────────────┘    └──────────────┘    └──────────────┘                 │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │ HTTP
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          FASTAPI BACKEND                                    │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                           API Layer                                    │  │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                │  │
+│  │  │ /ara     │ │ /auth/*  │ │ /hadis/* │ │ /fav*    │                │  │
+│  │  │ Search   │ │ Auth     │ │ Hadith   │ │ Favorites│                │  │
+│  │  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘                │  │
+│  │       └─────────────┴─────────────┴─────────────┘                     │  │
+│  │                         │                                           │  │
+│  │                         ▼                                           │  │
+│  │              ┌───────────────────────┐                              │  │
+│  │              │    Service Layer      │                              │  │
+│  │              │ ┌───────────────────┐ │                              │  │
+│  │              │ │ Hybrid Service    │ │ ◄── RRF Fusion              │  │
+│  │              │ │ ┌─────┐ ┌──────┐ │ │                              │  │
+│  │              │ │ │BM25 │ │Vector│ │ │                              │  │
+│  │              │ │ │Svc  │ │Svc   │ │ │                              │  │
+│  │              │ │ └─────┘ └──────┘ │ │                              │  │
+│  │              │ └───────────────────┘ │                              │  │
+│  │              └───────────┬───────────┘                              │  │
+│  │                          │                                           │  │
+│  │                          ▼                                           │  │
+│  │              ┌───────────────────────┐                                │  │
+│  │              │   Database Layer    │                                │  │
+│  │              │ ┌───────────────────┐ │                              │  │
+│  │              │ │ SQLAlchemy ORM   │ │                              │  │
+│  │              │ │ ┌─────┐ ┌──────┐ │ │                              │  │
+│  │              │ │ │MySQL│ │Qdrant│ │ │                              │  │
+│  │              │ │ │Conn │ │Client│ │ │                              │  │
+│  │              │ │ └─────┘ └──────┘ │ │                              │  │
+│  │              │ └───────────────────┘ │                              │  │
+│  │              └───────────────────────┘                              │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+VERİ AKIŞI:
+1. Kullanıcı sorgusu Frontend'den Backend'e HTTP GET /ara ile gönderilir
+2. Backend dil algılama yapar (Arapça/İngilizce)
+3. BM25 ve Vektör aramaları PARALEL olarak çalıştırılır
+4. RRF (Reciprocal Rank Fusion) ile sonuçlar birleştirilir
+5. MySQL'den detaylı hadis bilgileri çekilir
+6. JSON response Frontend'e döner
+
+================================================================================
+4. ARAMA ALGORİTMALARI
+================================================================================
+
+4.1 BM25 ARAMA (MySQL FULLTEXT)
+─────────────────────────────────────
+MySQL 8.0'ın FULLTEXT index özelliği kullanılarak kelime frekansına dayalı
+arama yapılır.
+
+Arapça için:
+- ngram parser (karakter tabanlı tokenizasyon)
+- Hareke kaldırma ve elif normalizasyonu
+- LIKE pattern matching ile boosting
+
+İngilizce için:
+- Varsayılan kelime tabanlı parser
+- NATURAL LANGUAGE MODE
+
+4.2 VEKTÖR ARAMA (Qdrant)
+─────────────────────────────────────
+Sentence Transformers modeli ile sorgu ve hadis metinleri 768 boyutlu
+vektörlere dönüştürülür. Qdrant'ta HNSW indeksi ile hızlı cosine similarity
+araması yapılır.
+
+Model: paraphrase-multilingual-mpnet-base-v2
+- 768 boyutlu embeddingler
+- Cosine similarity
+- Çok dilli destek (Arapça + İngilizce)
+
+4.3 RRF FUSION
+─────────────────────────────────────
+Reciprocal Rank Fusion ile iki kaynaktan gelen sonuçlar birleştirilir:
+
+    RRF_score(d) = Σ 1 / (k + rank_i(d))
+    k = 60 (standart değer)
+
+BM25 sonuçları: weight = 0.4
+Vektör sonuçları: weight = 0.6
+
+Bu formül sayesinde her iki kaynakta da yüksek sıralarda olan
+dokümanlar öne çıkar.
+
+================================================================================
+5. VERİTABANI TASARIMI
+================================================================================
+
+TABLOLAR:
+
+1. users (Kullanıcılar)
+   - id, email, hashed_password, full_name, is_active
+   - created_at, updated_at
+
+2. hadisler (Ana metadata)
+   - id, hadis_no, kitap, kitap_id, bab, ravi, kaynak_link
+   - FULLTEXT index yok (sadece metadata)
+
+3. hadis_arapca (Arapça metinler)
+   - hadis_id (FK), sanad, hadith_detail, metin_temiz
+   - FULLTEXT INDEX ft_arapca (metin_temiz) WITH PARSER ngram
+
+4. hadis_ingilizce (İngilizce metinler)
+   - hadis_id (FK), sanad, hadith_detail, metin_temiz
+   - FULLTEXT INDEX ft_ingilizce (metin_temiz)
+
+5. refresh_tokens (JWT refresh tokens)
+   - id, user_id (FK), token, expires_at, created_at
+
+İNDEKSLER:
+- idx_hadis_no: Arama hızlandırma
+- idx_email: Login sorguları
+- ft_arapca: Arapça FULLTEXT arama
+- ft_ingilizce: İngilizce FULLTEXT arama
+
+================================================================================
+6. KURULUM VE YAPIlandırma
+================================================================================
+
+6.1 ÇEVRE DEĞİŞKENLERİ (.env)
+─────────────────────────────────────
+MySQL bağlantı bilgileri, Qdrant host, JWT secret key ve embedding model
+adı burada tanımlanır.
+
+6.2 DOCKER ORCHESTRATION
+─────────────────────────────────────
+Services:
+- db: MySQL 8.0 container (utf8mb4 ayarları)
+- qdrant: Vektör veritabanı container
+- backend: FastAPI uygulaması container
+
+6.3 VERİ IMPORT
+─────────────────────────────────────
+scripts/import_data.py:
+- CSV dosyalarını okur
+- Arapça metinleri normalize eder (hareke kaldırma)
+- MySQL'e batch insert yapar
+- Embedding üretip Qdrant'a yükler
+
+================================================================================
+7. API REFERANSI (ÖZET)
+================================================================================
+
+Health Check:
+  GET /                    → {"status": "ok"}
+  GET /health              → {"status": "healthy"}
+
+Arama:
+  GET /ara?q={query}&dil={ar|en}&mod={hybrid|vector|bm25}&sayfa={n}&limit={n}
+
+Authentication:
+  POST /auth/register      → Yeni kullanıcı
+  POST /auth/login         → Giriş, token al
+  POST /auth/refresh       → Token yenile
+  GET  /auth/me            → Mevcut kullanıcı
+
+Hadis:
+  GET /hadis/{id}          → Tekil hadis detayı
+
+================================================================================
+8. KARŞILAŞILAN ZORLUKLAR VE ÇÖZÜMLER
+================================================================================
+
+ZORLUK 1: Arapça Metin İşleme
+- Harekeler (تَشْكِيل) farklı karakter kodlamasına neden oluyordu
+- ÇÖZÜM: regex ile diakritik işaretleri kaldırma fonksiyonu
+
+ZORLUK 2: Embedding Model Seçimi
+- Arapça için özel modeller denendi ama çok yavaştı
+- ÇÖZÜM: paraphrase-multilingual-mpnet-base-v2 çok dilli model
+
+ZORLUK 3: RRF Parametre Tuning
+- Farklı k değerleri test edildi
+- ÇÖZÜM: k=60 ve weight 0.4/0.6 en iyi sonuçları verdi
+
+ZORLUK 4: MySQL ngram Tokenizer
+- Varsayılan 2 karakter ngram çok kısa sonuçlar veriyordu
+- ÇÖZÜM: ft_min_word_len=2 ve özel like pattern matching ile boosting
+
+================================================================================
+9. PERFORMANS METRİKLERİ
+================================================================================
+
+Sorgu Süreleri (Yerel Geliştirme Ortamı):
+- BM25-only: ~50-100ms
+- Vector-only: ~200-500ms (model encoding süresi dahil)
+- Hybrid (RRF): ~300-600ms (paralel çalışma)
+
+Veri Seti:
+- Toplam hadis: 7,277
+- Arapça ve İngilizce metinler ayrı tablolarda
+- Embedding boyutu: 768 float/hadis
+- Toplam vektör sayısı: ~14,500 (ar + en)
+
+================================================================================
+10. GÜVENLİK ÖNLEMLERİ
+================================================================================
+
+- JWT token authentication (Access + Refresh)
+- bcrypt ile şifre hashleme
+- CORS middleware yapılandırması
+- SQL injection koruması (SQLAlchemy ORM)
+- .env dosyası gitignore'da
+- MySQL native password authentication
+
+================================================================================
+11. Gelecek Geliştirme Önerileri
+================================================================================
+
+1. RE-RANKING: CrossEncoder ile ikinci aşama sıralama
+2. FİLTRELEME: Kitap, ravi ve bölüm bazlı filtreleme
+3. ÖNERİ SİSTEMİ: Benzer hadis önerileri
+4. DETAY SAYFASI: Tekil hadis için ayrı sayfa
+5. CACHE: Redis ile sorgu sonuçları önbellek
+6. RATE LIMITING: API abuse koruması
+7. METRİKLER: Kullanıcı davranışı analizi
+8. TEST: Unit ve integration test coverage
+
+================================================================================
+12. SONUÇ
+================================================================================
+
+HadithSearch projesi, geleneksel bilgi erişim yöntemleri ile modern NLP
+tekniklerinin başarılı bir birleşimidir. Hibrit arama mimarisi sayesinde
+kullanıcılar hem tam eşleşme hem de anlamsal benzerlik araması yapabilir.
+
+Proje, açık kaynak teknolojiler kullanılarak geliştirilmiş ve Docker
+altyapısı sayesinde kolayca dağıtılabilir durumdadır.
+
+================================================================================
+EKLER
+================================================================================
+
+KAYNAKLAR:
+- FastAPI: https://fastapi.tiangolo.com/
+- Qdrant: https://qdrant.tech/documentation/
+- Sentence Transformers: https://www.sbert.net/
+- Vue.js: https://vuejs.org/
+- Tailwind CSS: https://tailwindcss.com/
+
+VERİ KAYNAĞI:
+- Sahih Bukhari: https://sunnah.com/bukhari
+- CSV formatında Arapça ve İngilizce metinler
+
+TEŞEKKÜR:
+Bu proje, Ostim Teknik Üniversitesi danışman hocalarının
+desteğiyle tamamlanmıştır.
+
+================================================================================
+                         RAPOR SONU
+================================================================================

@@ -4,7 +4,7 @@
   <img src="homepage.png" alt="HadithSearch Ana Ekran" width="800"/>
 </div>
 
-**HadithSearch**, Sahih Bukhari külliyatındaki **7.277 hadisi** Arapça ve İngilizce olarak arayabileceğiniz, modern bir web arama platformudur. Türkçe, Arapça ve İngilizce arayüz desteği ile hem masaüstü hem de mobil cihazlarda sorunsuz çalışır.
+**HadithSearch**, Sahih Bukhari külliyatındaki **7.277 hadisi** Arapça ve İngilizce olarak arayabileceğiniz, modern bir web arama platformudur. Hibrit arama teknolojisi ile hem klasik kelime eşleşmesi hem de anlamsal benzerlik araması sunar.
 
 ---
 
@@ -12,337 +12,306 @@
 
 | Özellik | Açıklama |
 |---------|----------|
-| 🔍 **Çift Dil Arama** | Arapça veya İngilizce sorgular otomatik algılanır |
+| 🔍 **3 Arama Modu** | Hybrid (BM25+Semantik), Vektör (Semantik), BM25 (Kelime) |
 | 🕌 **7.277 Hadis** | Sahih Bukhari'nin tamamı indekslenmiştir |
-| 🌐 **RTL / LTR Desteği** | Arapça için sağdan sola (RTL) arayüz |
-| 📚 **Kitap & Ravi Filtresi** | Sonuçları kitaba veya raviye göre daraltın |
-| ✨ **Arama Vurgulama** | Eşleşen kelimeler hadis kartında renkle işaretlenir |
-| 📱 **Mobil Uyumlu** | Tüm ekran boyutlarında düzgün görünür |
-| 🤖 **HadithAI** | Yapay zeka destekli hadis analizi *(yakında)* |
+| 🌐 **Çift Dil** | Arapça ve İngilizce sorgu desteği, otomatik dil algılama |
+| 🎯 **RRF Fusion** | Reciprocal Rank Fusion ile akıllı sonuç birleştirme |
+| 📱 **Modern UI** | Vue 3 + Tailwind CSS ile responsive tasarım |
+| ⚡ **Hızlı Sorgu** | Paralel arama ve asenkron veritabanı erişimi |
 
 ---
 
-## 🔍 Arama Mimarisi (Hybrid Search)
+## 🔍 Arama Mimarisi
 
-Sistem, en doğru ve anlamlı sonuçları getirmek için **Anahtar Kelime (BM25)** ve **Anlamsal (Semantik)** aramayı birleştiren hibrit bir mimari kullanır.
+Sistem, en doğru sonuçları getirmek için **BM25** (MySQL FULLTEXT) ve **Semantik Arama** (Qdrant Vektör DB) sonuçlarını **RRF (Reciprocal Rank Fusion)** ile birleştirir.
+
+### Arama Akışı
 
 ```mermaid
-graph TD
-    A[Kullanıcı Sorgusu] --> B{Dil Algılama}
-    B -- "Arapça / İngilizce" --> C[Paralel Arama]
-    
-    subgraph "Arama Motorları"
-    C --> D[BM25 - Anahtar Kelime<br/>MySQL Full-Text]
-    C --> E[Vektör Arama - Semantik<br/>Qdrant DB]
+flowchart TB
+    subgraph Input["Kullanıcı Girişi"]
+        A[Kullanıcı Sorgusu]
     end
     
-    D --> F[RRF Fusion<br/>Reciprocal Rank Fusion]
-    E --> F
+    A --> B{Dil Algılama}
     
-    F --> G[Veri Zenginleştirme<br/>MySQL Details]
-    G --> H[Sonuç Listesi]
+    subgraph SearchLayer["Paralel Arama Katmanı"]
+        direction TB
+        B --> C[BM25 Arama<br/>MySQL FULLTEXT]
+        B --> D[Vektör Arama<br/>Qdrant]
+    end
+    
+    subgraph FusionLayer["Fusion Katmanı"]
+        C --> E{RRF Fusion}
+        D --> E
+        E --> F[Sonuç Zenginleştirme<br/>MySQL Detay]
+    end
+    
+    F --> G[Sıralı Sonuç Listesi]
+    
+    style Input fill:#F4EFE4
+    style SearchLayer fill:#EAF2EA
+    style FusionLayer fill:#E8F4F8
 ```
 
-### 🧠 Nasıl Çalışır?
-1.  **Dil Algılama:** Sorgunun dili (Ar/En) otomatik olarak tespit edilir.
-2.  **Paralel Arama:** Eş zamanlı olarak hem klasik kelime eşleşmesi hem de derin öğrenme tabanlı anlam benzerliği sorgulanır.
-3.  **RRF Fusion:** İki farklı kaynaktan gelen sonuçlar, sıralama derecelerine göre ağırlıklandırılarak birleştirilir.
-4.  **Zenginleştirme:** Sadece en alakalı sonuçların detayları veritabanından çekilerek performans optimize edilir.
+### Detaylı Veri Akışı
+
+```mermaid
+sequenceDiagram
+    participant U as Kullanıcı
+    participant API as FastAPI
+    participant D as Dil Algılama
+    participant BM as BM25 Service
+    participant VS as Vector Service
+    participant RRF as RRF Fusion
+    participant DB as MySQL
+    
+    U->>API: GET /ara?q=prayer
+    API->>D: detect_language()
+    D-->>API: dil=en
+    
+    par Paralel Arama
+        API->>BM: bm25_search(query)
+        BM->>DB: FULLTEXT Query
+        DB-->>BM: BM25 Results
+        BM-->>API: ranked_list_1
+    and
+        API->>VS: vector_search(query)
+        VS->>VS: encode(query)
+        VS->>VS: qdrant.search()
+        VS-->>API: ranked_list_2
+    end
+    
+    API->>RRF: reciprocal_rank_fusion(lists)
+    RRF-->>API: fused_ranks
+    
+    API->>DB: fetch_hadis_details(ids)
+    DB-->>API: hadis detayları
+    
+    API-->>U: JSON Response
+```
+
+### Arama Modları
+
+| Mod | Açıklama | Kullanım Alanı |
+|-----|----------|----------------|
+| `hybrid` | BM25 + Vektör + RRF | Genel arama (varsayılan) |
+| `vector` | Sadece semantik arama | Anlam benzerliği önemliyse |
+| `bm25` | Sadece kelime eşleşmesi | Tam eşleşme gerekiyorsa |
 
 ---
 
 ## 🏗️ Proje Yapısı
 
+### Sistem Bileşenleri
+
+```mermaid
+graph TB
+    subgraph Client["Frontend (Vue 3 + Vite)"]
+        A[App.vue]
+        B[HadithCard.vue]
+        C[SearchBox]
+    end
+    
+    subgraph API["Backend (FastAPI)"]
+        D[Routers]
+        E[Services]
+        F[Database Layer]
+        
+        D --> E
+        E --> F
+    end
+    
+    subgraph Data["Veritabanları"]
+        G[(MySQL 8.0)]
+        H[(Qdrant)]
+    end
+    
+    A -->|HTTP/REST| D
+    F -->|SQL| G
+    F -->|HTTP| H
+    
+    style Client fill:#F4EFE4
+    style API fill:#EAF2EA
+    style Data fill:#E8F4F8
 ```
-AL_Hadith-master/
-├── backend/                   # FastAPI (Python) API sunucusu
+
+### Klasör Yapısı
+
+```
+AL_Hadith/
+├── backend/                    # FastAPI Backend
 │   ├── app/
 │   │   ├── main.py            # API giriş noktası
-│   │   ├── config.py          # Ayarlar (.env dosyasını okur)
-│   │   ├── database/          # Veritabanı modelleri ve bağlantı
-│   │   ├── routers/           # API endpoint'leri (arama, auth, favoriler)
-│   │   └── services/          # İş mantığı (BM25, hibrit arama)
+│   │   ├── config.py          # Ortam değişkenleri
+│   │   ├── database/          # SQLAlchemy modelleri
+│   │   ├── routers/           # API endpoint'leri
+│   │   │   ├── search.py      # /ara endpoint
+│   │   │   ├── auth.py        # JWT authentication
+│   │   │   └── hadith.py      # Hadis detay endpoint
+│   │   └── services/          # İş mantığı
+│   │       ├── hybrid_service.py   # RRF fusion
+│   │       ├── bm25_service.py     # MySQL FULLTEXT
+│   │       └── vector_service.py   # Qdrant arama
 │   ├── scripts/
 │   │   ├── init.sql           # Veritabanı şeması
-│   │   └── import_data.py     # CSV → MySQL veri aktarımı
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/                  # Vue.js 3 + Vite arayüzü
+│   │   └── import_data.py     # CSV → MySQL import
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/                   # Vue 3 Frontend
 │   ├── src/
-│   │   ├── App.vue            # Ana uygulama bileşeni
-│   │   ├── components/
-│   │   │   └── HadithCard.vue # Hadis kartı
-│   │   └── services/
-│   │       └── api.js         # Backend API bağlantısı
-│   ├── index.html
-│   └── package.json
-├── veriler csv/
-│   ├── bukhari_arabic.csv     # 7.277 Arapça hadis
-│   └── bukhari_english.csv    # 7.277 İngilizce hadis
-├── docker-compose.yml         # MySQL + Qdrant + Backend
-├── .env.example               # Ortam değişkeni şablonu
-└── README.md
+│   │   ├── App.vue            # Ana uygulama
+│   │   ├── components/        # Vue bileşenleri
+│   │   └── services/          # API servisleri
+│   ├── package.json
+│   └── index.html
+├── veriler csv/               # Hadis veri setleri
+│   ├── bukhari_arabic.csv
+│   └── bukhari_english.csv
+├── docker-compose.yml         # Container orchestration
+├── .env.example               # Çevre değişkenleri şablonu
+└── docs/                      # Proje dokümantasyonu
+    ├── SYSTEM_ARCHITECTURE.md
+    ├── API_DOCUMENTATION.md
+    ├── DATABASE_DESIGN.md
+    └── VECTOR_SEARCH_PIPELINE.md
 ```
 
 ---
 
-## ⚙️ Gereksinimler
+## 🚀 Hızlı Başlangıç
 
-Kuruluma başlamadan önce aşağıdaki yazılımların bilgisayarınızda kurulu olduğundan emin olun:
+### Gereksinimler
 
-| Yazılım | Minimum Sürüm | İndirme |
-|---------|---------------|---------|
-| **Docker Desktop** | 24.0+ | [docker.com](https://www.docker.com/products/docker-desktop/) |
-| **Node.js** | 18.0+ | [nodejs.org](https://nodejs.org/) |
-| **Python** | 3.11+ | [python.org](https://www.python.org/downloads/) |
-| **Git** | herhangi | [git-scm.com](https://git-scm.com/) |
+| Yazılım | Minimum Sürüm |
+|---------|---------------|
+| Docker Desktop | 24.0+ |
+| Node.js | 18.0+ |
+| Python | 3.11+ |
 
-> 💡 **Windows kullanıcıları:** Docker Desktop'ı yükledikten sonra bilgisayarı yeniden başlatmanız gerekebilir.
-
----
-
-## 🚀 Kurulum Adımları
-
-### Adım 1 — Projeyi İndirin
+### Kurulum
 
 ```bash
-git clone https://github.com/kullanici-adi/AL_Hadith.git
-cd AL_Hadith-master
-```
-
-ya da ZIP olarak indirdiyseniz, klasörü açıp terminal ile içine girin.
-
----
-
-### Adım 2 — Ortam Değişkenlerini Ayarlayın
-
-Proje kök dizinindeki `.env.example` dosyasını kopyalayın:
-
-```bash
-# Windows (PowerShell)
-Copy-Item .env.example .env
-
-# Mac / Linux
+# 1. Ortam değişkenlerini ayarla
 cp .env.example .env
-```
 
-`.env` dosyasını bir metin editörüyle açın ve `SECRET_KEY` satırını güncelleyin:
-
-```env
-SECRET_KEY=buraya_guclu_bir_sifre_yazin_en_az_32_karakter
-```
-
-> ⚠️ `.env` dosyasını **asla** GitHub'a yüklemeyiniz. Zaten `.gitignore` ile korunmaktadır.
-
----
-
-### Adım 3 — Docker ile Veritabanını Başlatın
-
-```bash
-# MySQL ve Qdrant container'larını başlat
+# 2. Veritabanlarını başlat
 docker compose up -d db qdrant
 
-# Container'ların çalıştığını doğrula
-docker compose ps
-```
-
-Beklenen çıktı:
-```
-NAME              STATUS
-hadis_mysql       running
-hadis_qdrant      running
-```
-
-> ⏳ İlk başlatmada Docker image'ları indirilir. Bu birkaç dakika sürebilir.
-
----
-
-### Adım 4 — Veritabanına Veri Aktarın
-
-Bu adım 7.277 hadisi MySQL'e yükler.
-
-```bash
-# Backend klasörüne girin
+# 3. Backend bağımlılıklarını yükle
 cd backend
-
-# Gerekli kütüphaneleri yükle
 pip install -r requirements.txt
 
-# Veri aktarımını başlat (yaklaşık 2-4 dakika sürer)
+# 4. Verileri import et (ilk kurulumda)
 python scripts/import_data.py
-```
 
-Başarılı çıktı örneği:
-```
-[3/5] Mevcut veriler temizleniyor...
-[4/5] Hadisler import ediliyor...
-Import: 100%|████████████| 7277/7277 [03:12<00:00, 37.8 hadis/s]
-[5/5] Tamamlandı! 7277 hadis yüklendi.
-```
-
-> 💡 Sadece ilk 100 hadisi test etmek için: `python scripts/import_data.py --limit 100`
-
----
-
-### Adım 5 — Backend API'yi Çalıştırın
-
-```bash
-# backend/ klasöründeyken:
+# 5. API'yi başlat
 uvicorn app.main:app --reload
-```
 
-API hazır olduğunda terminalde şunu görürsünüz:
-```
-INFO:     Uvicorn running on http://127.0.0.1:8000
-```
-
-API belgelerini görüntülemek için tarayıcınızda açın: **http://localhost:8000/docs**
-
----
-
-### Adım 6 — Frontend'i Çalıştırın
-
-Yeni bir terminal penceresi açın:
-
-```bash
-# Proje kök dizinine geri dönün
-cd frontend
-
-# Bağımlılıkları yükleyin (ilk seferinde)
+# 6. Frontend'i başlat (yeni terminal)
+cd ../frontend
 npm install
-
-# Geliştirme sunucusunu başlatın
 npm run dev
 ```
 
-Başarılı çıktı:
-```
-  VITE v8.0.x  ready in 480 ms
+### Servisler
 
-  ➜  Local:   http://localhost:5173/
-```
-
-Tarayıcınızda açın: **http://localhost:5173**
+| Servis | URL | Açıklama |
+|--------|-----|----------|
+| Web Arayüzü | http://localhost:5173 | Vue.js uygulaması |
+| API | http://localhost:8000 | FastAPI endpoints |
+| API Docs | http://localhost:8000/docs | Swagger UI |
+| Qdrant | http://localhost:6333 | Vektör veritabanı |
 
 ---
 
-## 📋 Hızlı Başlangıç (Kurulum Sonrası)
+## 🔌 Temel API Kullanımı
 
-Projeyi daha önce kurduysanız her seferinde sadece şu adımları uygulayın:
+### Arama
 
 ```bash
-# 1. Veritabanı container'larını başlat
-docker compose up -d db qdrant
+# İngilizce arama (hybrid mod)
+curl "http://localhost:8000/ara?q=prayer&dil=en&mod=hybrid"
 
-# 2. API'yi başlat (yeni terminal)
-cd backend
-uvicorn app.main:app --reload
+# Arapça arama (vektör mod)
+curl "http://localhost:8000/ara?q=الصلاة&dil=ar&mod=vector"
 
-# 3. Frontend'i başlat (yeni terminal)
-cd frontend
-npm run dev
+# Sayfalama ile
+curl "http://localhost:8000/ara?q=fasting&sayfa=2&limit=10"
 ```
 
-| Servis | Adres |
-|--------|-------|
-| 🌐 Web Arayüzü | http://localhost:5173 |
-| 🔌 API | http://localhost:8000 |
-| 📄 API Belgeleri | http://localhost:8000/docs |
+### Response Format
+
+```json
+{
+  "sorgu": "prayer",
+  "dil": "en",
+  "mod": "hybrid",
+  "sayfa": 1,
+  "toplam": 156,
+  "sonuclar": [
+    {
+      "id": 123,
+      "hadis_no": "BH-456",
+      "kitap": "Sahih al-Bukhari",
+      "bab": "Book of Prayer",
+      "ravi": "Abu Huraira",
+      "kaynak_link": "https://sunnah.com/bukhari:456",
+      "arapca": {
+        "sanad": "حَدَّثَنَا...",
+        "hadith_detail": "إِنَّمَا الأَعْمَالُ..."
+      },
+      "ingilizce": {
+        "sanad": "Narrated by...",
+        "hadith_detail": "The deeds are..."
+      },
+      "skor": 0.854321
+    }
+  ]
+}
+```
 
 ---
 
-## 🔌 API Endpoint'leri
+## 📦 Teknoloji Stack
 
-| Metod | URL | Açıklama |
-|-------|-----|----------|
-| `GET` | `/` | Sağlık kontrolü |
-| `GET` | `/docs` | Swagger arayüzü |
-| `GET` | `/ara?q=prayer&dil=en` | İngilizce arama |
-| `GET` | `/ara?q=الصلاة&dil=ar` | Arapça arama |
-| `GET` | `/hadis/{id}` | Tekil hadis detayı |
-| `POST` | `/auth/register` | Kullanıcı kaydı |
-| `POST` | `/auth/login` | Giriş ve token alma |
+| Katman | Teknoloji | Amaç |
+|--------|-----------|------|
+| **Frontend** | Vue.js 3 + Vite | UI framework |
+| **Stil** | Tailwind CSS 4.x | CSS framework |
+| **Backend** | FastAPI 0.115+ | API framework |
+| **Database** | MySQL 8.0 | Metadata + FULLTEXT |
+| **Vector DB** | Qdrant 1.12+ | Semantik arama |
+| **ORM** | SQLAlchemy 2.0+ | Veritabanı erişimi |
+| **Auth** | python-jose + bcrypt | JWT authentication |
+| **NLP** | sentence-transformers | Embedding üretimi |
+| **Container** | Docker + Compose | Altyapı yönetimi |
 
 ---
 
-## 🧪 Test Etme
+## � Dokümantasyon
 
-API'nin çalıştığını doğrulamak için:
+Detaylı teknik dokümantasyon `docs/` klasöründe:
+
+- **[SYSTEM_ARCHITECTURE.md](docs/SYSTEM_ARCHITECTURE.md)** - Sistem mimarisi ve veri akışı
+- **[API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)** - Tüm API endpointleri
+- **[DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md)** - Veritabanı şeması ve ilişkiler
+- **[VECTOR_SEARCH_PIPELINE.md](docs/VECTOR_SEARCH_PIPELINE.md)** - Vektör arama süreci
+
+---
+
+## 🧪 Test
 
 ```bash
-# Sağlık kontrolü
+# API sağlık kontrolü
 curl http://localhost:8000/
 
-# İngilizce arama
-curl "http://localhost:8000/ara?q=prayer&dil=en"
+# Arama testi
+curl "http://localhost:8000/ara?q=charity&dil=en&limit=5"
 
-# Arapça arama
-curl "http://localhost:8000/ara?q=الصلاة&dil=ar"
+# Hadis detayı
+curl "http://localhost:8000/hadis/1"
 ```
-
----
-
-## 🐛 Sık Karşılaşılan Sorunlar
-
-### ❌ Docker container başlamıyor
-```bash
-# Docker'ın çalıştığını kontrol edin
-docker info
-
-# Container loglarını inceleyin
-docker compose logs db
-```
-
-### ❌ `pip install` hatası veriyor
-```bash
-# pip'i güncelleyin
-python -m pip install --upgrade pip
-
-# Tekrar deneyin
-pip install -r requirements.txt
-```
-
-### ❌ `npm install` hatası veriyor
-```bash
-# Node.js versiyonunu kontrol edin (18+ olmalı)
-node --version
-
-# node_modules'u temizleyip yeniden deneyin
-rm -rf node_modules
-npm install
-```
-
-### ❌ Veri aktarımında "Connection refused" hatası
-Docker container'ların tamamen başlaması için 30 saniye bekleyip tekrar deneyin:
-```bash
-docker compose ps   # STATUS: running olduğunu doğrulayın
-python scripts/import_data.py
-```
-
-### ❌ Port zaten kullanımda
-```bash
-# 5173 portunu kullanan uygulamayı bulun
-# Windows:
-netstat -ano | findstr :5173
-
-# Frontend için farklı port kullanın
-npm run dev -- --port 5174
-```
-
----
-
-## 📦 Kullanılan Teknolojiler
-
-| Katman | Teknoloji | Versiyon |
-|--------|-----------|----------|
-| **Frontend** | Vue.js 3 + Vite | 3.x / 8.x |
-| **Stil** | Tailwind CSS | 3.x |
-| **Backend API** | FastAPI + Uvicorn | 0.115 |
-| **Veritabanı** | MySQL 8.0 | 8.0 |
-| **ORM** | SQLAlchemy (async) | 2.0 |
-| **Vektör DB** | Qdrant | 1.12 |
-| **Auth** | JWT + bcrypt | — |
-| **Container** | Docker + Compose | 24+ |
 
 ---
 
@@ -350,9 +319,9 @@ npm run dev -- --port 5174
 
 Bu proje, **Ostim Teknik Üniversitesi** öğrencileri tarafından geliştirilmiştir.
 
-📬 Bize ulaşmak için:
-- [230205913@ostimteknik.edu.tr](mailto:230205913@ostimteknik.edu.tr,230205928@ostimteknik.edu.tr)
-- [230205928@ostimteknik.edu.tr](mailto:230205913@ostimteknik.edu.tr,230205928@ostimteknik.edu.tr)
+📬 İletişim:
+- 230205913@ostimteknik.edu.tr
+- 230205928@ostimteknik.edu.tr
 
 ---
 
