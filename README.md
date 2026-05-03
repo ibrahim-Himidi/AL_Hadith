@@ -2,9 +2,6 @@
 
 **HadithSearch**, Sahih Bukhari külliyatındaki **7.277 hadisi** Arapça ve İngilizce olarak arayabileceğiniz, modern bir web arama platformudur. Türkçe, Arapça ve İngilizce arayüz desteği ile hem masaüstü hem de mobil cihazlarda sorunsuz çalışır.
 
-> 🎓 Bu proje, Ostim Teknik Üniversitesi öğrencileri tarafından geliştirilmiştir.  
-> 📬 İletişim: [230205913@ostimteknik.edu.tr](mailto:230205913@ostimteknik.edu.tr) · [230205928@ostimteknik.edu.tr](mailto:230205928@ostimteknik.edu.tr)
-
 ---
 
 ## 🌟 Özellikler
@@ -18,6 +15,35 @@
 | ✨ **Arama Vurgulama** | Eşleşen kelimeler hadis kartında renkle işaretlenir |
 | 📱 **Mobil Uyumlu** | Tüm ekran boyutlarında düzgün görünür |
 | 🤖 **HadithAI** | Yapay zeka destekli hadis analizi *(yakında)* |
+
+---
+
+## 🔍 Arama Mimarisi (Hybrid Search)
+
+Sistem, en doğru ve anlamlı sonuçları getirmek için **Anahtar Kelime (BM25)** ve **Anlamsal (Semantik)** aramayı birleştiren hibrit bir mimari kullanır.
+
+```mermaid
+graph TD
+    A[Kullanıcı Sorgusu] --> B{Dil Algılama}
+    B -- "Arapça / İngilizce" --> C[Paralel Arama]
+    
+    subgraph "Arama Motorları"
+    C --> D[BM25 - Anahtar Kelime<br/>MySQL Full-Text]
+    C --> E[Vektör Arama - Semantik<br/>Qdrant DB]
+    end
+    
+    D --> F[RRF Fusion<br/>Reciprocal Rank Fusion]
+    E --> F
+    
+    F --> G[Veri Zenginleştirme<br/>MySQL Details]
+    G --> H[Sonuç Listesi]
+```
+
+### 🧠 Nasıl Çalışır?
+1.  **Dil Algılama:** Sorgunun dili (Ar/En) otomatik olarak tespit edilir.
+2.  **Paralel Arama:** Eş zamanlı olarak hem klasik kelime eşleşmesi hem de derin öğrenme tabanlı anlam benzerliği sorgulanır.
+3.  **RRF Fusion:** İki farklı kaynaktan gelen sonuçlar, sıralama derecelerine göre ağırlıklandırılarak birleştirilir.
+4.  **Zenginleştirme:** Sadece en alakalı sonuçların detayları veritabanından çekilerek performans optimize edilir.
 
 ---
 
