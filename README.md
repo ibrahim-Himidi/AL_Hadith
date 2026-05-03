@@ -315,15 +315,6 @@ curl "http://localhost:8000/hadis/1"
 
 ---
 
-## 👥 Geliştirici Ekibi
-
-Bu proje, **Ostim Teknik Üniversitesi** öğrencileri tarafından geliştirilmiştir.
-
-📬 İletişim:
-- 230205913@ostimteknik.edu.tr
-- 230205928@ostimteknik.edu.tr
-
----
 
 ## 📄 Lisans
 
